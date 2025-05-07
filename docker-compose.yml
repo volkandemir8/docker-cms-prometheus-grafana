@@ -1,0 +1,126 @@
+version: '3.8'
+
+services:
+  # MYSQL
+  mysql:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpass
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - monitoring
+
+  # PostgreSQL
+  postgres:
+    image: postgres:14
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: pgpass
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - monitoring
+
+  # MySQL Exporter
+  mysqld_exporter:
+    image: prom/mysqld-exporter
+    environment:
+      DATA_SOURCE_NAME: "root:rootpass@(mysql:3306)/"
+    ports:
+      - "9105:9105"
+    depends_on:
+      - mysql
+    networks:
+      - monitoring
+
+  # PostgreSQL Exporter
+  postgres_exporter:
+    image: prometheuscommunity/postgres-exporter
+    environment:
+      DATA_SOURCE_NAME: "postgresql://postgres:pgpass@postgres:5432/postgres?sslmode=disable"
+    ports:
+      - "9187:9187"
+    depends_on:
+      - postgres
+    networks:
+      - monitoring
+
+  # Prometheus
+  prometheus:
+    image: prom/prometheus
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+    ports:
+      - "9090:9090"
+    depends_on:
+      - mysqld_exporter
+      - postgres_exporter
+    networks:
+      - monitoring
+
+  # Grafana
+  grafana:
+    image: grafana/grafana
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+    depends_on:
+      - prometheus
+    networks:
+      - monitoring
+
+  # Joomla 1 (MySQL)
+  joomla1:
+    image: joomla
+    container_name: joomla_mysql
+    ports:
+      - "8081:80"
+    environment:
+      JOOMLA_DB_HOST: mysql
+      JOOMLA_DB_USER: root
+      JOOMLA_DB_PASSWORD: rootpass
+      JOOMLA_DB_NAME: joomla_db
+    depends_on:
+      - mysql
+    volumes:
+      - joomla1_data:/var/www/html
+    networks:
+      - monitoring
+
+  # Joomla 2 (PostgreSQL)
+  joomla2:
+    image: joomla
+    container_name: joomla_pgsql
+    ports:
+      - "8082:80"
+    environment:
+      JOOMLA_DB_HOST: postgres
+      JOOMLA_DB_TYPE: pgsql
+      JOOMLA_DB_USER: postgres
+      JOOMLA_DB_PASSWORD: pgpass
+      JOOMLA_DB_NAME: postgres
+    depends_on:
+      - postgres
+    volumes:
+      - joomla2_data:/var/www/html
+    networks:
+      - monitoring
+
+volumes:
+  mysql_data:
+  postgres_data:
+  grafana_data:
+  joomla1_data:
+  joomla2_data:
+
+networks:
+  monitoring:
+    driver: bridge
