@@ -17,37 +17,22 @@ This project demonstrates a containerized setup for running Joomla CMS instances
 
 1. Clone the repository:
     ```bash
-    git clone <repository-url>
+    git clone https://github.com/volkandemir8/docker-cms-prometheus-grafana.git
     cd docker-cms-prometheus-grafana
     ```
 
-2. Create the `prometheus.yml` configuration file in the project root:
-    ```yaml
-    global:
-      scrape_interval: 15s
-
-    scrape_configs:
-      - job_name: 'mysql'
-         static_configs:
-            - targets: ['mysqld_exporter:9105']
-
-      - job_name: 'postgres'
-         static_configs:
-            - targets: ['postgres_exporter:9187']
-    ```
-
-3. Start the containers:
+2. Start the containers:
     ```bash
     docker-compose up -d
     ```
 
-4. Access the services:
+3. Access the services:
     - Joomla (MySQL): [http://localhost:8081](http://localhost:8081)
     - Joomla (PostgreSQL): [http://localhost:8082](http://localhost:8082)
     - Prometheus: [http://localhost:9090](http://localhost:9090)
     - Grafana: [http://localhost:3000](http://localhost:3000)
 
-5. Configure Grafana:
+4. Configure Grafana:
     - Log in with the default credentials (`admin`/`admin`).
     - Add Prometheus as a data source.
     - Import or create dashboards to visualize metrics.
@@ -75,8 +60,4 @@ All services are connected to a custom Docker network named `monitoring`.
 To stop and remove the containers, run:
 ```bash
 docker-compose down
-```
-
-## License
-
-This project is licensed under the MIT License.  
+``` 
